@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Para ti, papá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Caveat:wght@500;600;700&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-night-1:#080b22;
+    --bg-night-2:#161b44;
+    --bg-dawn-1:#2b1f4a;
+    --bg-dawn-2:#c97b4a;
+    --bg-dawn-3:#f2b66d;
+    --paper:#f7efdf;
+    --ink:#2c2113;
+    --ink-soft:#5a4c38;
+    --gold:#e3a857;
+    --gold-bright:#f4c878;
+    --coral:#e2725b;
+    --cream:#f5efe6;
+    --road-line:#f4c878;
+    --stripe-red:#b0402c;
+    --stripe-blue:#2c4f8a;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    overflow:hidden;
+    font-family:'Work Sans', sans-serif;
+    background:var(--bg-night-1);
+    color:var(--ink);
+  }
+  button{font-family:inherit;}
+
+  /* ---------- BACKGROUND ---------- */
+  .sky{ position:fixed; inset:0; z-index:0; }
+  .sky-night, .sky-dawn{ position:absolute; inset:0; transition:opacity 1.4s ease; }
+  .sky-night{
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.05), transparent 40%),
+      linear-gradient(180deg, var(--bg-night-1) 0%, var(--bg-night-2) 55%, #1c2150 100%);
+    opacity:1;
+  }
+  .sky-dawn{
+    background:
+      radial-gradient(ellipse at 75% 12%, rgba(255,225,170,0.55), transparent 55%),
+      linear-gradient(180deg, var(--bg-dawn-1) 0%, var(--bg-dawn-2) 55%, var(--bg-dawn-3) 100%);
+    opacity:0;
+  }
+  .stars{position:absolute; inset:0; overflow:hidden;}
+  .star{ position:absolute; background:#fff; border-radius:50%; animation:twinkle 3.5s ease-in-out infinite; }
+  @keyframes twinkle{ 0%,100%{opacity:.25; transform:scale(1);} 50%{opacity:1; transform:scale(1.3);} }
+  .firefly{
+    position:absolute; bottom:0; width:3px; height:3px; border-radius:50%;
+    background:var(--gold-bright); box-shadow:0 0 7px 2px rgba(244,200,120,.65);
+    opacity:0; animation:driftUp linear infinite;
+  }
+  @keyframes driftUp{
+    0%{ opacity:0; transform:translate(0,0); }
+    12%{ opacity:.85; }
+    88%{ opacity:.55; }
+    100%{ opacity:0; transform:translate(var(--sway,20px), -52vh); }
+  }
+  .shooting-star{ position:absolute; width:2px; height:2px; background:#fff; border-radius:50%; box-shadow:0 0 0 1px rgba(255,255,255,.6); opacity:0; }
+  .shooting-star.fire{ animation:shoot 1.6s ease-out forwards; }
+  @keyframes shoot{
+    0%{opacity:1; transform:translate(0,0);}
+    8%{opacity:1;}
+    100%{opacity:0; transform:translate(-340px,220px);}
+  }
+
+  .hills{
+    position:absolute; bottom:0; left:0; width:100%; height:34vh; z-index:1;
+    transition:transform .7s ease;
+  }
+  .hills svg{display:block; width:100%; height:100%;}
+
+  /* ---------- FLYING CHARACTERS ---------- */
+  .flyer{ position:fixed; left:0; z-index:2; pointer-events:none; will-change:transform; }
+  .flyer img{ display:block; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 6px 12px rgba(0,0,0,.4)); }
+
+  /* ---------- ROAD BAR ---------- */
+  .road-bar{ position:fixed; top:0; left:0; width:100%; height:128px; z-index:5;
+    background:linear-gradient(180deg, rgba(8,11,34,0.55), rgba(8,11,34,0)); pointer-events:none; }
+  .road-svg{width:100%; height:100%; display:block;}
+  .road-path-base{ fill:none; stroke:rgba(255,255,255,0.16); stroke-width:14; stroke-linecap:round; }
+  .road-path-line{ fill:none; stroke:var(--road-line); stroke-width:2.5; stroke-dasharray:10 14; stroke-linecap:round; opacity:.65; animation:dashmove 6s linear infinite; }
+  @keyframes dashmove{ to{ stroke-dashoffset:-240; } }
+
+  .waypoint{
+    position:absolute; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%;
+    background:transparent; border:2px solid rgba(244,200,120,.55); transition:all .4s ease;
+    pointer-events:auto; cursor:pointer;
+  }
+  .waypoint .wp-tag{
+    position:absolute; top:14px; left:50%; transform:translateX(-50%); font-size:11px; white-space:nowrap;
+    color:var(--gold-bright); opacity:0; transition:opacity .25s ease; font-weight:500; letter-spacing:.02em;
+  }
+  .waypoint:hover .wp-tag{opacity:.85;}
+  .waypoint.done{ background:var(--gold); border-color:var(--gold); }
+  .waypoint.current{
+    width:16px; height:16px; background:var(--gold-bright); border-color:var(--gold-bright);
+    animation:pulseGlow 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%,100%{ box-shadow:0 0 0 5px rgba(244,200,120,.22), 0 0 14px rgba(244,200,120,.7); }
+    50%{ box-shadow:0 0 0 9px rgba(244,200,120,.32), 0 0 22px rgba(244,200,120,.95); }
+  }
+  .waypoint.special::after{
+    content:'✈'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:9px; color:#1a1430;
+  }
+
+  .car-marker{
+    position:absolute; transform:translate(-50%,-50%); font-size:20px; z-index:6;
+    filter:drop-shadow(0 0 6px rgba(244,200,120,.85));
+    transition:left .65s cubic-bezier(.65,0,.35,1), top .65s cubic-bezier(.65,0,.35,1);
+    pointer-events:none;
+  }
+
+  .progress-label{
+    position:fixed; top:96px; left:50%; transform:translateX(-50%); z-index:5;
+    font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--cream); opacity:.7; font-weight:500;
+  }
+
+  /* ---------- SECTIONS ---------- */
+  .section{
+    position:fixed; inset:0; z-index:4; display:flex; align-items:center; justify-content:center;
+    opacity:0; visibility:hidden; pointer-events:none; transition:opacity .5s ease;
+  }
+  .section.active{ opacity:1; visibility:visible; pointer-events:auto; }
+
+  /* ---------- HERO ---------- */
+  #hero{ flex-direction:column; text-align:center; padding:0 24px; }
+  .hero-eyebrow{ font-family:'Caveat', cursive; font-size:28px; color:var(--gold-bright); margin-bottom:4px; opacity:.9; }
+  .hero-title{ font-family:'Fraunces', serif; font-weight:500; font-size:clamp(40px,6vw,76px); color:var(--cream); margin:0 0 10px 0; line-height:1.05; }
+  .hero-sub{ font-family:'Work Sans'; font-weight:300; font-size:16px; color:var(--cream); opacity:.65; max-width:440px; margin:0 auto 46px; letter-spacing:.02em; }
+
+  .envelope{ position:relative; width:240px; height:160px; margin:0 auto 54px; cursor:pointer; }
+  .envelope-body{ position:absolute; inset:0; background:linear-gradient(165deg,#f7efdf,#e9d9b6); border-radius:6px; box-shadow:0 18px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.05); }
+  .envelope-flap{
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    clip-path:polygon(0 0, 100% 0, 50% 58%);
+    background:linear-gradient(165deg,#efe1c2,#dcc89a);
+    transform-origin:top center; transition:transform .7s cubic-bezier(.7,0,.3,1);
+    border-radius:6px 6px 0 0;
+  }
+  .envelope.open .envelope-flap{ transform:rotateX(180deg); }
+  .envelope-seal{
+    position:absolute; top:46%; left:50%; transform:translate(-50%,-50%); width:38px; height:38px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, var(--coral), #a8402b);
+    display:flex; align-items:center; justify-content:center; color:#f7e8d6; font-size:16px;
+    box-shadow:0 4px 10px rgba(0,0,0,.35); z-index:2; transition:opacity .3s ease;
+  }
+  .envelope.open .envelope-seal{ opacity:0; }
+  .envelope-hint{ position:absolute; bottom:-40px; left:0; width:100%; text-align:center; font-size:13px; color:var(--cream); opacity:.55; letter-spacing:.04em; }
+
+  /* ---------- JOURNEY ---------- */
+  #journey{ flex-direction:column; padding-top:60px; }
+  .stage{ position:relative; width:100%; flex:1; display:flex; align-items:center; justify-content:center; perspective:1400px; }
+  .card{
+    position:relative; width:min(620px, 86vw); min-height:300px;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:50px 64px;
+    background-color:var(--paper);
+    background-image:repeating-linear-gradient(0deg, transparent 0 27px, rgba(44,33,19,0.035) 27px 28px);
+    color:var(--ink);
+    clip-path:polygon(
+      0% 1.5%, 4% 0%, 16% 1%, 30% 0.3%, 47% 1.1%, 63% 0.2%, 79% 1%, 92% 0.2%, 100% 1.5%,
+      100% 97.5%, 95% 99%, 84% 98.2%, 69% 99.4%, 52% 98.6%, 38% 99.6%, 22% 98.5%, 9% 99.3%, 0% 97.5%
+    );
+    box-shadow:0 30px 70px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.04);
+    transition:transform .45s cubic-bezier(.65,0,.35,1), opacity .45s ease;
+  }
+  .card::before, .card::after{
+    content:''; position:absolute; top:0; bottom:0; width:11px;
+    background-image:repeating-linear-gradient(135deg, var(--stripe-red) 0 9px, var(--paper) 9px 13px, var(--stripe-blue) 13px 22px, var(--paper) 22px 26px);
+    opacity:.85;
+  }
+  .card::before{ left:0; }
+  .card::after{ right:0; }
+  .card.rot-a{ transform:rotate(-1.1deg); }
+  .card.rot-b{ transform:rotate(0.9deg); }
+  .card.anim-out-next{ transform:translateX(-90px) rotate(-3deg); opacity:0; }
+  .card.anim-out-prev{ transform:translateX(90px) rotate(3deg); opacity:0; }
+  .card.anim-in-next{ transform:translateX(90px) rotate(2deg); opacity:0; }
+  .card.anim-in-prev{ transform:translateX(-90px) rotate(-2deg); opacity:0; }
+
+  .card-watermark{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:200px; opacity:.07; color:var(--ink); pointer-events:none; z-index:0;
+    animation:breathe 6s ease-in-out infinite;
+  }
+  @keyframes breathe{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.045); } }
+
+  .card-seal{
+    position:absolute; top:-16px; right:38px; width:38px; height:38px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold));
+    display:flex; align-items:center; justify-content:center; color:#241a08; font-size:16px;
+    box-shadow:0 8px 16px rgba(0,0,0,.35); z-index:2;
+    animation:sealDrop .55s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes sealDrop{
+    0%{ opacity:0; transform:translateY(-18px) rotate(-25deg) scale(.4); }
+    100%{ opacity:1; transform:translateY(0) rotate(-8deg) scale(1); }
+  }
+
+  .card-eyebrow{
+    position:relative; z-index:1;
+    font-family:'Work Sans'; font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--coral); font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px;
+  }
+  .card-eyebrow .line{ height:1px; flex:1; background:linear-gradient(90deg, var(--coral), transparent); transform-origin:left center; animation:drawLine .7s ease both; }
+  @keyframes drawLine{ 0%{ transform:scaleX(0); opacity:0; } 100%{ transform:scaleX(1); opacity:1; } }
+
+  .card-text{
+    position:relative; z-index:1;
+    font-family:'Fraunces', serif; font-weight:400; font-style:italic;
+    font-size:clamp(18px,2vw,21px); line-height:1.68; color:var(--ink); margin:0;
+  }
+  .card-text .drop{ float:left; font-size:64px; line-height:48px; padding:6px 8px 0 0; font-weight:500; color:var(--coral); font-style:normal; }
+  .card-ornament{ position:relative; z-index:1; text-align:center; color:var(--gold); opacity:.55; font-size:18px; margin-top:22px; }
+
+  .nav-row{ display:flex; align-items:center; justify-content:center; gap:22px; padding:18px 0 40px; }
+  .nav-btn{
+    border:none; cursor:pointer; border-radius:999px; font-size:14px; font-weight:500; letter-spacing:.02em;
+    padding:13px 26px; display:flex; align-items:center; gap:8px;
+    transition:transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+  }
+  .nav-btn:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:3px; }
+  .nav-btn.ghost{ background:rgba(255,255,255,0.06); color:var(--cream); border:1px solid rgba(244,200,120,.35); }
+  .nav-btn.ghost:hover{ background:rgba(255,255,255,0.12); transform:translateY(-1px); }
+  .nav-btn.ghost:disabled{ opacity:.25; cursor:default; transform:none; }
+  .nav-btn.solid{ background:linear-gradient(135deg, var(--gold-bright), var(--gold)); color:#241a08; box-shadow:0 8px 22px rgba(227,168,87,.35); }
+  .nav-btn.solid:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(227,168,87,.5); }
+  .nav-counter{ font-size:13px; color:var(--cream); opacity:.6; min-width:78px; text-align:center; letter-spacing:.04em; }
+
+  /* ---------- FINAL ---------- */
+  #final{ flex-direction:column; text-align:center; padding:90px 24px 40px; }
+  .final-title{ font-family:'Fraunces', serif; font-weight:500; font-size:clamp(36px,5vw,58px); color:var(--cream); margin:0 0 26px; }
+  .signature-block{
+    position:relative;
+    background-color:var(--paper);
+    background-image:repeating-linear-gradient(0deg, transparent 0 24px, rgba(44,33,19,0.03) 24px 25px);
+    color:var(--ink); padding:36px 52px; border-radius:4px; box-shadow:0 24px 60px rgba(0,0,0,.5);
+    max-width:480px; margin:0 auto 30px; transform:rotate(-0.8deg);
+    clip-path:polygon(0 2%,5% 0,95% 1%,100% 2%,100% 98%,94% 100%,6% 99%,0 98%);
+  }
+  .signature-block::before, .signature-block::after{
+    content:''; position:absolute; top:0; bottom:0; width:9px;
+    background-image:repeating-linear-gradient(135deg, var(--stripe-red) 0 7px, var(--paper) 7px 10px, var(--stripe-blue) 10px 17px, var(--paper) 17px 20px);
+    opacity:.85;
+  }
+  .signature-block::before{ left:0; }
+  .signature-block::after{ right:0; }
+  .signature-line{ font-family:'Fraunces', serif; font-style:italic; font-size:19px; margin:0 0 14px; line-height:1.5; }
+  .signature-name{ font-family:'Caveat', cursive; font-size:42px; color:var(--coral); margin-top:6px; }
+  .photo-frame{
+    width:170px; height:202px; margin:0 auto 34px; padding:14px 14px 38px;
+    background:#fdfaf3; box-shadow:0 18px 40px rgba(0,0,0,.4); transform:rotate(2deg);
+    position:relative;
+  }
+  .final-photo{ width:100%; height:100%; object-fit:cover; display:block; }
+  .photo-frame .caption{
+    position:absolute; bottom:4px; left:0; width:100%; text-align:center;
+    font-family:'Caveat', cursive; font-size:16px; color:var(--ink-soft);
+  }
+  .final-buttons{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+
+  /* ---------- HUG + MUTE BUTTONS ---------- */
+  .hug-btn{
+    position:fixed; bottom:30px; right:30px; z-index:20; width:64px; height:64px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(135deg, var(--coral), #c14e36); box-shadow:0 10px 26px rgba(226,114,91,.5);
+    display:flex; align-items:center; justify-content:center; font-size:26px;
+    transition:transform .25s cubic-bezier(.5,-0.3,.4,1.5);
+  }
+  .hug-btn:hover{ transform:scale(1.08); }
+  .hug-btn:active{ transform:scale(.94); }
+  .hug-btn:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:4px; }
+  .hug-label{
+    position:fixed; bottom:48px; right:104px; z-index:20; background:rgba(8,11,34,.85); color:var(--cream); font-size:12px;
+    padding:8px 12px; border-radius:8px; opacity:0; transform:translateX(8px);
+    transition:opacity .25s ease, transform .25s ease; pointer-events:none; white-space:nowrap;
+  }
+  .hug-wrap:hover .hug-label{ opacity:1; transform:translateX(0); }
+
+  .mute-btn{
+    position:fixed; bottom:30px; left:30px; z-index:20; width:50px; height:50px; border-radius:50%;
+    border:1px solid rgba(244,200,120,.35); background:rgba(255,255,255,0.06); color:var(--cream);
+    cursor:pointer; font-size:19px; display:flex; align-items:center; justify-content:center;
+    transition:transform .2s ease, background .2s ease;
+  }
+  .mute-btn:hover{ background:rgba(255,255,255,.12); transform:translateY(-1px); }
+  .mute-btn:active{ transform:scale(.92); }
+
+  .hug-toast{
+    position:fixed; bottom:112px; right:30px; z-index:21; background:var(--paper); color:var(--ink); padding:12px 18px; border-radius:10px;
+    font-family:'Fraunces', serif; font-style:italic; font-size:14px; box-shadow:0 14px 30px rgba(0,0,0,.4);
+    opacity:0; transform:translateY(10px); transition:opacity .35s ease, transform .35s ease; pointer-events:none; max-width:240px;
+  }
+  .hug-toast.show{ opacity:1; transform:translateY(0); }
+
+  .particle{ position:fixed; z-index:19; pointer-events:none; font-size:18px; animation:floatUp 1.8s ease-out forwards; }
+  @keyframes floatUp{
+    0%{ opacity:1; transform:translate(0,0) scale(.8) rotate(0deg); }
+    100%{ opacity:0; transform:translate(var(--dx),-180px) scale(1.2) rotate(var(--rot)); }
+  }
+  .particle.plane{ font-size:22px; animation:flyAway 2.2s ease-in forwards; }
+  @keyframes flyAway{
+    0%{ opacity:1; transform:translate(0,0) rotate(35deg) scale(.8); }
+    55%{ opacity:1; }
+    100%{ opacity:0; transform:translate(280px,-260px) rotate(35deg) scale(1.15); }
+  }
+
+  .confetti{ position:fixed; top:-20px; z-index:19; pointer-events:none; width:8px; height:14px; opacity:.95; animation:confettiFall linear forwards; }
+  @keyframes confettiFall{ 0%{ transform:translateY(0) rotate(0deg); opacity:1; } 100%{ transform:translateY(110vh) rotate(540deg); opacity:0; } }
+
+  @media (max-width:760px){
+    .road-bar{height:90px;}
+    .progress-label{top:64px;}
+    #journey{padding-top:36px;}
+    .card{padding:42px 28px 34px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .road-path-line, .waypoint.current, .card-watermark, .firefly{ animation:none; }
+    .star{ animation:none; opacity:.6;}
+    .shooting-star.fire{ animation:none; opacity:0;}
+    .card, .nav-btn, .hug-btn{ transition-duration:.15s; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky">
+  <div class="sky-night"></div>
+  <div class="sky-dawn" id="skyDawn"></div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<div class="hills" id="hills">
+  <svg viewBox="0 0 1600 300" preserveAspectRatio="none">
+    <path d="M0,300 L0,180 C200,120 380,210 560,160 C760,100 900,200 1080,150 C1260,100 1420,180 1600,140 L1600,300 Z" fill="#0c1230"></path>
+    <path d="M0,300 L0,230 C220,180 420,250 600,210 C800,165 980,235 1180,200 C1360,170 1480,220 1600,200 L1600,300 Z" fill="#141a3e"></path>
+  </svg>
+</div>
+
+<div class="road-bar">
+  <svg class="road-svg" viewBox="0 0 1600 130" preserveAspectRatio="none">
+    <path id="roadPath" class="road-path-base"
+      d="M -20 100 C 180 30, 320 170, 520 95 S 880 20 1080 95 S 1440 170 1620 95"></path>
+    <path class="road-path-line"
+      d="M -20 100 C 180 30, 320 170, 520 95 S 880 20 1080 95 S 1440 170 1620 95"></path>
+  </svg>
+  <div id="waypoints"></div>
+  <div class="car-marker" id="carMarker">🚐</div>
+</div>
+<div class="progress-label" id="progressLabel">Parada 1 de 18</div>
+
+<!-- HERO -->
+<section class="section active" id="hero">
+  <div class="hero-eyebrow">Querido papá,</div>
+  <h1 class="hero-title">Una carta para ti</h1>
+  <p class="hero-sub">Antes de irme a Alemania, quiero que sepas todo esto. Ábrela cuando estés listo.</p>
+  <div class="envelope" id="envelope" tabindex="0" role="button" aria-label="Abrir la carta">
+    <div class="envelope-body"></div>
+    <div class="envelope-seal">♥</div>
+    <div class="envelope-flap"></div>
+    <div class="envelope-hint">Toca el sobre para abrir el camino</div>
+  </div>
+</section>
+
+<!-- JOURNEY -->
+<section class="section" id="journey">
+  <div class="stage">
+    <div class="card rot-a" id="card"><!-- filled by JS --></div>
+  </div>
+  <div class="nav-row">
+    <button class="nav-btn ghost" id="prevBtn" aria-label="Párrafo anterior">← Atrás</button>
+    <span class="nav-counter" id="navCounter">1 / 18</span>
+    <button class="nav-btn solid" id="nextBtn" aria-label="Siguiente párrafo">Seguir el camino →</button>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section class="section" id="final">
+  <h2 class="final-title">Feliz Día del Padre</h2>
+  <div class="photo-frame">
+    <img class="final-photo" src="foto-final.jpg" alt="Papá y Uriel">
+    <div class="caption">Tú y yo ❤</div>
+  </div>
+  <div class="signature-block">
+    <p class="signature-line">Feliz Día del Padre, Ichipu.</p>
+    <p class="signature-line">Te quiero mucho.</p>
+    <p class="signature-name">Uriel</p>
+  </div>
+  <div class="final-buttons">
+    <button class="nav-btn ghost" id="restartBtn">↺ Volver a vivir el camino</button>
+  </div>
+</section>
+
+<button class="mute-btn" id="muteBtn" aria-label="Silenciar música">🔊</button>
+
+<div class="hug-wrap">
+  <button class="hug-btn" id="hugBtn" aria-label="Mandar un abrazo hasta Alemania">🤗</button>
+  <div class="hug-label">Envíale un abrazo a Uriel, hasta Alemania</div>
+</div>
+<div class="hug-toast" id="hugToast"></div>
+
+<audio id="bgMusic" src="cancion.mp3" loop preload="auto"></audio>
+<audio id="hugSound" src="abrazo.mp3" preload="auto"></audio>
+
+<script>
+(function(){
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- LETTER DATA ---------- */
+  const paragraphs = [
+    { text:"Quiero aprovechar este Día del Padre para decirte cosas que muchas veces pienso, pero que casi nunca sé expresar de la mejor manera." },
+    { text:"Primero que nada, quiero darte las gracias. Gracias por todo lo que has hecho por mí y por nuestra familia. De verdad estoy muy agradecido contigo." },
+    { text:"Con el tiempo me he dado cuenta de que, además de ser un gran padre, eres un gran hombre. Pienso que eres una persona con principios morales muy marcados y con un enorme sentido de responsabilidad. Admiro mucho cómo no permites que pequeñas distracciones o cosas pasajeras te desvíen de tus objetivos y cómo siempre te mantienes enfocado en lo que consideras importante." },
+    { text:"También admiro y respeto muchísimo la manera en que nunca dudas ni un solo momento en poner a tu familia por encima de ti mismo. Siempre buscas lo mejor para nosotros, aun cuando eso implique hacer sacrificios personales. Es algo que admiro profundamente y que espero algún día poder hacer también por mi propia familia." },
+    { text:"Para mí eres un hombre ejemplar. Y no solo lo pienso yo. Puedo ver cómo mis primos y muchas otras personas te tienen admiración y respeto por la persona que eres, por tu carácter, por tu forma de pensar, por tu cabeza y por tus acciones. Ver eso me hace sentir muy orgulloso de ser tu hijo." },
+    { text:"Quiero que sepas que valoro enormemente todo lo que haces por mí. Has apostado mucho por mi educación y por mi futuro. Confías plenamente en mí y has invertido tiempo, esfuerzo, dinero y muchas otras cosas para darme oportunidades que sé que no son fáciles de conseguir. Espero algún día poder estar a la altura de toda esa confianza que has depositado en mí." },
+    { text:"También quiero agradecerte el enorme sacrificio que estás haciendo para que yo pueda irme a Alemania. Sé que no es algo sencillo y que detrás de esa oportunidad hay años de trabajo, preocupaciones y decisiones en las que muchas veces te pusiste a ti mismo en segundo plano para darme la posibilidad de cumplir este sueño.", special:true, tag:"Rumbo a Alemania" },
+    { text:"Quiero que tengas por seguro que todas las enseñanzas que me has dado las llevo conmigo. Me has enseñado con palabras, pero sobre todo con tu ejemplo. Estando allá intentaré actuar con responsabilidad, mantener mis principios firmes, tomar buenas decisiones y recordar siempre de dónde vengo y quién me enseñó a ser la persona que soy hoy." },
+    { text:"Conforme he ido creciendo, he empezado a notar esas pequeñas cosas que antes pasaban desapercibidas. Como cuando prefieres manejar cientos de kilómetros para llevar a tu familia de una ciudad a otra simplemente porque quieres asegurarte de que lleguemos seguros. O cuando decides no comprarte los mejores tenis, la mejor ropa o el mejor celular para poder dármelo a mí. A veces es difícil comprender cómo un padre puede preferir sacrificar su propia comodidad, o incluso quitarse el pan de la boca, con tal de dárselo a sus hijos. Y sinceramente es algo que admiro muchísimo." },
+    { text:"También pienso que eres una persona muy fuerte. Siempre te he visto enfrentar los problemas y las dificultades con cabeza fría, sin dejarte llevar por las emociones y tratando de tomar las mejores decisiones posibles. Esa fortaleza es algo que respeto mucho y que intento aprender de ti." },
+    { text:"Creo que una de las mayores seguridades que he tenido en mi vida ha sido saber que siempre has estado detrás de mí. Nunca he tenido que preguntarme qué pasaría si algo sale mal, porque siempre he sentido que cuento contigo. Y sinceramente nunca he dudado que, pase lo que pase, tú estarías ahí para ayudarme. Saber eso me ha dado mucha tranquilidad y mucha confianza para atreverme a perseguir mis metas." },
+    { text:"También quiero agradecerte la confianza que siempre me has dado y la confianza tan grande que yo siento contigo. Sé que muchas veces no te platico tanto sobre algunas cosas de mi vida, pero quiero que sepas que no es porque no me sienta en confianza contigo; al contrario. Hay veces en las que simplemente no sé qué decir o no encuentro la manera de expresar lo que pienso o siento. Pero créeme cuando te digo que tengo una confianza enorme contigo. Incluso algunos de mis amigos se han sorprendido al saber las cosas que te he platicado, o que sabes de mí y la naturalidad con  la que te las puedo  decir, ya que muchos hijos como ellos nunca le confiarían estos temas a sus papá. Y es algo que valoro muchísimo, como aquella vez que me llevaste al doctor para ya sabes qué. Son detalles como ese los que me hacen darme cuenta de que, además de ser mi papá, también has sabido ser alguien en quien puedo confiar plenamente, aún que tu puedas llegar a sentir que no." },
+    { text:"Quiero que sepas que aspiro a que algún día, además de ser un gran padre como tú, pueda llegar a ser aunque sea la mitad del hombre que eres. Quiero ser una persona fuerte, inteligente, íntegra, responsable, disciplinada, trabajadora, prudente, generosa, confiable, resiliente y capaz de mantenerse firme en sus principios. Quiero ser un líder que predique con el ejemplo, un proveedor que cuide de su familia sin esperar nada a cambio y una persona a la que otros puedan acudir cuando tengan problemas porque saben que encontrarán apoyo, consejo y una respuesta sensata. No sé si algún día logre convertirme en alguien así, pero sí sé que he tenido el mejor ejemplo posible frente a mí durante toda mi vida." },
+    { text:"A veces no sé cómo expresar todos estos sentimientos y probablemente no me desenvuelvo de la mejor manera para demostrarlos. Pero quiero que sepas que te tengo un amor inmenso. Y además de ese amor, siento por ti un respeto y una admiración enormes." },
+    { text:"También deseo que llegue un momento en tu vida en el que puedas descansar un poco más y dedicarte tiempo a ti mismo. Siento que has pasado gran parte de tu vida preocupándote por nosotros, trabajando, haciendo sacrificios y procurando que nunca nos falte nada. Me gustaría que algún día puedas disfrutar más de las cosas que te gustan, con la tranquilidad de saber que tu esfuerzo valió la pena." },
+    { text:"Y cuando esté en Alemania y me extrañes, quiero que leas esta carta. Quiero que recuerdes que, aunque esté a miles de kilómetros de distancia, una parte de mí siempre estará en casa contigo. Imagina que estas palabras son un abrazo mío para que puedas sentirme cerca. Quiero que sepas que pensaré mucho en ti y que agradeceré cada día todo lo que has hecho por mí.", special:true, tag:"A miles de km" },
+    { text:"Espero que cuando regrese de Alemania puedas mirar atrás y sentir tranquilidad al ver que todos los sacrificios que hiciste, todas las preocupaciones que tuviste y todo el esfuerzo que pusiste en mí dieron frutos. Espero que puedas sentir que valió la pena apostar por mí." },
+    { text:"Gracias por todo lo que has hecho, por todo lo que haces y por todo lo que sigues sacrificando por nosotros. Me siento muy orgulloso de ser tu hijo y espero que algún día puedas sentirte tan orgulloso de mí como yo me siento orgulloso de ti." }
+  ];
+  const total = paragraphs.length;
+  const watermarkIcons = ['❤','✦','🌿','🧭','☀'];
+
+  /* ---------- STATE ---------- */
+  let view = 'hero';
+  let index = 0;
+
+  /* ---------- ELEMENTS ---------- */
+  const heroSection = document.getElementById('hero');
+  const journeySection = document.getElementById('journey');
+  const finalSection = document.getElementById('final');
+  const envelope = document.getElementById('envelope');
+  const card = document.getElementById('card');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const navCounter = document.getElementById('navCounter');
+  const progressLabel = document.getElementById('progressLabel');
+  const skyDawn = document.getElementById('skyDawn');
+  const carMarker = document.getElementById('carMarker');
+  const waypointsWrap = document.getElementById('waypoints');
+  const restartBtn = document.getElementById('restartBtn');
+  const hugBtn = document.getElementById('hugBtn');
+  const hugToast = document.getElementById('hugToast');
+  const hills = document.getElementById('hills');
+  const muteBtn = document.getElementById('muteBtn');
+  const bgMusic = document.getElementById('bgMusic');
+  const roadBar = document.querySelector('.road-bar');
+  const navRowEl = document.querySelector('.nav-row');
+
+  /* ---------- AUDIO ---------- */
+  const MUSIC_VOL = 0.45;
+  const MUSIC_DUCK = 0.06;
+  const HUG_GAIN = 1.9;
+  bgMusic.volume = MUSIC_VOL;
+  let musicStarted = false;
+  let muted = false;
+  let fadeTimer = null;
+  let activeHugs = 0;
+  let audioCtx = null;
+
+  function ensureAudioCtx(){
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC){ audioCtx = new AC(); }
+    }
+    if(audioCtx && audioCtx.state === 'suspended'){ audioCtx.resume(); }
+    return audioCtx;
+  }
+  function fadeMusicTo(target, duration){
+    clearInterval(fadeTimer);
+    const start = bgMusic.volume;
+    const t0 = performance.now();
+    fadeTimer = setInterval(()=>{
+      const t = Math.min(1, (performance.now()-t0)/duration);
+      bgMusic.volume = start + (target-start)*t;
+      if(t>=1) clearInterval(fadeTimer);
+    }, 40);
+  }
+  function startMusic(){
+    if(musicStarted) return;
+    musicStarted = true;
+    ensureAudioCtx();
+    bgMusic.play().catch(()=>{});
+  }
+  muteBtn.addEventListener('click', ()=>{
+    muted = !muted;
+    bgMusic.muted = muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  function playHugSound(){
+    activeHugs++;
+    fadeMusicTo(MUSIC_DUCK, 120);
+    const finishOnce = (()=>{
+      let finished = false;
+      return ()=>{
+        if(finished) return; finished = true;
+        activeHugs = Math.max(0, activeHugs-1);
+        if(activeHugs===0) fadeMusicTo(MUSIC_VOL, 550);
+      };
+    })();
+    try{
+      const ctx = ensureAudioCtx();
+      if(!ctx) throw new Error('no audio context');
+      const snd = new Audio('abrazo.mp3');
+      snd.muted = muted;
+      const src = ctx.createMediaElementSource(snd);
+      const gain = ctx.createGain();
+      gain.gain.value = HUG_GAIN;
+      src.connect(gain).connect(ctx.destination);
+      snd.addEventListener('ended', finishOnce, {once:true});
+      snd.play().catch(finishOnce);
+      setTimeout(finishOnce, 4000);
+    }catch(err){
+      const snd = new Audio('abrazo.mp3');
+      snd.volume = 1;
+      snd.muted = muted;
+      snd.addEventListener('ended', finishOnce, {once:true});
+      snd.play().catch(finishOnce);
+      setTimeout(finishOnce, 4000);
+    }
+  }
+
+  /* ---------- STARS + FIREFLIES ---------- */
+  const starsWrap = document.getElementById('stars');
+  for(let i=0;i<70;i++){
+    const s = document.createElement('div');
+    s.className='star';
+    const size = Math.random()*2+1;
+    s.style.width = size+'px';
+    s.style.height = size+'px';
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*70+'%';
+    s.style.animationDelay = (Math.random()*3.5)+'s';
+    starsWrap.appendChild(s);
+  }
+  if(!reduceMotion){
+    for(let i=0;i<10;i++){
+      const f = document.createElement('div');
+      f.className='firefly';
+      f.style.left = Math.random()*100+'%';
+      f.style.animationDuration = (10+Math.random()*8)+'s';
+      f.style.animationDelay = (Math.random()*10)+'s';
+      f.style.setProperty('--sway', ((Math.random()-0.5)*70)+'px');
+      starsWrap.appendChild(f);
+    }
+  }
+  function shootStar(){
+    if(reduceMotion) return;
+    const s = document.createElement('div');
+    s.className='shooting-star fire';
+    s.style.left = (40+Math.random()*40)+'%';
+    s.style.top = (Math.random()*18)+'%';
+    starsWrap.appendChild(s);
+    setTimeout(()=>s.remove(),1700);
+  }
+  function loopShoot(){ shootStar(); setTimeout(loopShoot, 7000+Math.random()*6000); }
+  setTimeout(loopShoot, 4000);
+
+  /* ---------- FLYING CHARACTERS (solo durante la carta, nunca sobre ella) ---------- */
+  function topBoundaryBottom(){ return roadBar.getBoundingClientRect().bottom; }
+  function bottomBoundaryTop(){ return navRowEl.getBoundingClientRect().top; }
+
+  function spawnFlyer(src, w, h, alt){
+    if(view !== 'journey') return;
+    const cardRect = card.getBoundingClientRect();
+    const topMin = topBoundaryBottom() + 16;
+    const topMax = cardRect.top - h - 12;
+    const botMin = cardRect.bottom + 12;
+    const botMax = bottomBoundaryTop() - h - 16;
+    const bands = [];
+    if(topMax - topMin > 20) bands.push([topMin, topMax]);
+    if(botMax - botMin > 20) bands.push([botMin, botMax]);
+    if(!bands.length) return;
+    const band = bands[Math.floor(Math.random()*bands.length)];
+    const y = band[0] + Math.random()*(band[1]-band[0]);
+    const ltr = Math.random() < 0.5;
+    const vw = window.innerWidth;
+    const startX = ltr ? -w-30 : vw+30;
+    const endX = ltr ? vw+30 : -w-30;
+    const dur = 7000 + Math.random()*2500;
+
+    const el = document.createElement('div');
+    el.className = 'flyer';
+    el.style.top = y+'px';
+    el.style.width = w+'px';
+    el.style.height = h+'px';
+    el.style.transform = `translateX(${startX}px)`;
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = alt;
+    if(!ltr){ img.style.transform = 'scaleX(-1)'; }
+    el.appendChild(img);
+    document.body.appendChild(el);
+
+    if(typeof el.animate === 'function'){
+      const anim = el.animate(
+        [{ transform:`translateX(${startX}px)` }, { transform:`translateX(${endX}px)` }],
+        { duration: dur, easing:'linear' }
+      );
+      anim.onfinish = ()=> el.remove();
+    } else {
+      el.style.transition = `transform ${dur}ms linear`;
+      requestAnimationFrame(()=>{ el.style.transform = `translateX(${endX}px)`; });
+      setTimeout(()=> el.remove(), dur+100);
+    }
+  }
+
+  function startFlyerLoop(spawnFn, firstMin, firstMax, repMin, repMax){
+    function loop(isFirst){
+      const delay = isFirst ? (firstMin+Math.random()*(firstMax-firstMin)) : (repMin+Math.random()*(repMax-repMin));
+      setTimeout(()=>{
+        spawnFn();
+        loop(false);
+      }, delay);
+    }
+    loop(true);
+  }
+  if(!reduceMotion){
+    startFlyerLoop(()=>spawnFlyer('perrito.png', 140, 62, 'Perrito salchicha volando'), 8000, 13000, 18000, 30000);
+    startFlyerLoop(()=>spawnFlyer('superman.png', 160, 102, 'Superman volando con su perrito'), 14000, 20000, 24000, 38000);
+  }
+
+  /* ---------- ROAD WAYPOINTS ---------- */
+  const roadPath = document.getElementById('roadPath');
+  const VB_W = 1600, VB_H = 130;
+  let pathLen = 0;
+  const wpEls = [];
+
+  function buildWaypoints(){
+    pathLen = roadPath.getTotalLength();
+    waypointsWrap.innerHTML = '';
+    wpEls.length = 0;
+    for(let i=0;i<total;i++){
+      const frac = total===1 ? 0 : i/(total-1);
+      const pt = roadPath.getPointAtLength(frac*pathLen);
+      const el = document.createElement('div');
+      el.className = 'waypoint' + (paragraphs[i].special ? ' special':'');
+      el.style.left = (pt.x/VB_W*100)+'%';
+      el.style.top = (pt.y/VB_H*100)+'%';
+      el.title = 'Parada '+(i+1);
+      el.addEventListener('click', ()=>{ if(view==='journey'){ goTo(i); } });
+      if(paragraphs[i].tag){
+        const tag = document.createElement('div');
+        tag.className='wp-tag';
+        tag.textContent = paragraphs[i].tag;
+        el.appendChild(tag);
+      }
+      waypointsWrap.appendChild(el);
+      wpEls.push(el);
+    }
+    updateCarPosition();
+  }
+
+  function updateCarPosition(){
+    const frac = total===1 ? 0 : index/(total-1);
+    const pt = roadPath.getPointAtLength(frac*pathLen);
+    carMarker.style.left = (pt.x/VB_W*100)+'%';
+    carMarker.style.top = (pt.y/VB_H*100)+'%';
+    wpEls.forEach((el,i)=>{
+      el.classList.toggle('current', i===index && view==='journey');
+      el.classList.toggle('done', i<index || view==='final');
+    });
+    skyDawn.style.opacity = view==='final' ? 1 : Math.min(frac*0.95, 0.95);
+    hills.style.transform = `translateX(${-(frac*26)}px)`;
+  }
+
+  window.addEventListener('resize', buildWaypoints);
+
+  /* ---------- RENDER CARD ---------- */
+  function renderCard(){
+    const p = paragraphs[index];
+    card.classList.remove('rot-a','rot-b');
+    card.classList.add(index%2===0?'rot-a':'rot-b');
+    const wm = p.special ? '✈' : watermarkIcons[index % watermarkIcons.length];
+    let html = `<div class="card-watermark">${wm}</div><div class="card-seal">✦</div>`;
+    if(p.tag){ html += `<div class="card-eyebrow">${p.tag}<span class="line"></span></div>`; }
+    else { html += `<div class="card-eyebrow">Parada ${index+1}<span class="line"></span></div>`; }
+    let text = p.text;
+    if(index===0){
+      const first = text.charAt(0);
+      text = `<span class="drop">${first}</span>` + text.slice(1);
+    }
+    html += `<p class="card-text">${text}</p>`;
+    html += `<div class="card-ornament">❧</div>`;
+    card.innerHTML = html;
+    navCounter.textContent = (index+1)+' / '+total;
+    progressLabel.textContent = 'Parada '+(index+1)+' de '+total;
+    prevBtn.disabled = index===0;
+    nextBtn.textContent = index===total-1 ? 'Llegar a casa ❤️' : 'Seguir el camino →';
+    updateCarPosition();
+  }
+
+  function animateSwap(direction){
+    const outClass = direction==='next' ? 'anim-out-next' : 'anim-out-prev';
+    const inClass = direction==='next' ? 'anim-in-next' : 'anim-in-prev';
+    if(reduceMotion){ renderCard(); return; }
+    card.classList.add(outClass);
+    setTimeout(()=>{
+      card.classList.remove(outClass);
+      renderCard();
+      card.classList.add(inClass);
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{ card.classList.remove(inClass); });
+      });
+    }, 260);
+  }
+
+  function goTo(i){
+    if(i===index) return;
+    const dir = i>index ? 'next' : 'prev';
+    index = Math.max(0, Math.min(total-1, i));
+    animateSwap(dir);
+  }
+
+  /* ---------- VIEW SWITCHING ---------- */
+  function setView(next){
+    view = next;
+    heroSection.classList.toggle('active', view==='hero');
+    journeySection.classList.toggle('active', view==='journey');
+    finalSection.classList.toggle('active', view==='final');
+    updateCarPosition();
+    if(view==='final') burstConfetti();
+  }
+
+  envelope.addEventListener('click', openLetter);
+  envelope.addEventListener('keypress', (e)=>{ if(e.key==='Enter'||e.key===' '){ openLetter(); }});
+  function openLetter(){
+    if(envelope.classList.contains('open')) return;
+    envelope.classList.add('open');
+    startMusic();
+    setTimeout(()=>{
+      index = 0;
+      setView('journey');
+      renderCard();
+    }, reduceMotion ? 80 : 650);
+  }
+
+  nextBtn.addEventListener('click', ()=>{
+    if(index < total-1){ goTo(index+1); }
+    else { setView('final'); }
+  });
+  prevBtn.addEventListener('click', ()=>{ if(index>0) goTo(index-1); });
+  restartBtn.addEventListener('click', ()=>{ index = 0; setView('journey'); renderCard(); });
+
+  document.addEventListener('keydown', (e)=>{
+    if(view!=='journey') return;
+    if(e.key==='ArrowRight' || e.key==='Enter'){ nextBtn.click(); }
+    if(e.key==='ArrowLeft'){ prevBtn.click(); }
+  });
+
+  /* ---------- HUG BUTTON: él le manda un abrazo a Uriel, hasta Alemania ---------- */
+  const hugMessages = [
+    'Tu abrazo ya va en camino a Alemania. ✈️',
+    'Uriel sintió tu abrazo desde aquí. ❤️',
+    'Un abrazo cruzando el Atlántico para Uriel.',
+    'Acabas de mandarle un abrazo a Uriel. 🤍',
+    'Ese abrazo ya casi llega a Alemania. 💛'
+  ];
+  const hearts = ['❤️','🤍','✨','💛'];
+  hugBtn.addEventListener('click', ()=>{
+    playHugSound();
+    const msg = hugMessages[Math.floor(Math.random()*hugMessages.length)];
+    hugToast.textContent = msg;
+    hugToast.classList.add('show');
+    clearTimeout(hugBtn._t);
+    hugBtn._t = setTimeout(()=> hugToast.classList.remove('show'), 2400);
+
+    const rect = hugBtn.getBoundingClientRect();
+    const count = reduceMotion ? 4 : 14;
+    for(let i=0;i<count;i++){
+      const p = document.createElement('div');
+      p.className='particle';
+      p.textContent = hearts[Math.floor(Math.random()*hearts.length)];
+      p.style.left = (rect.left+rect.width/2)+'px';
+      p.style.top = (rect.top+rect.height/2)+'px';
+      const dx = (Math.random()-0.5)*220;
+      const rot = (Math.random()-0.5)*120;
+      p.style.setProperty('--dx', dx+'px');
+      p.style.setProperty('--rot', rot+'deg');
+      p.style.animationDelay = (Math.random()*0.2)+'s';
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(), 2200);
+    }
+    if(!reduceMotion){
+      const plane = document.createElement('div');
+      plane.className='particle plane';
+      plane.textContent='✈️';
+      plane.style.left=(rect.left+rect.width/2)+'px';
+      plane.style.top=(rect.top+rect.height/2)+'px';
+      document.body.appendChild(plane);
+      setTimeout(()=>plane.remove(), 2300);
+    }
+  });
+
+  /* ---------- CONFETTI ---------- */
+  function burstConfetti(){
+    if(reduceMotion) return;
+    const colors = ['#e3a857','#f4c878','#e2725b','#f5efe6'];
+    const count = 60;
+    for(let i=0;i<count;i++){
+      const c = document.createElement('div');
+      c.className='confetti';
+      c.style.left = Math.random()*100+'vw';
+      c.style.background = colors[Math.floor(Math.random()*colors.length)];
+      c.style.animationDuration = (2.6+Math.random()*1.8)+'s';
+      c.style.animationDelay = (Math.random()*0.6)+'s';
+      c.style.borderRadius = Math.random()>0.5 ? '50%':'2px';
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(), 5000);
+    }
+  }
+
+  /* ---------- INIT ---------- */
+  buildWaypoints();
+  renderCard();
+})();
+</script>
+</body>
+</html>
